@@ -21,9 +21,15 @@ def create_vector_db(scraped_data):
                 contents=entry['text']
             )
             
+            if not result.embeddings or not result.embeddings[0].values:
+                print(f"❌ Vektör hatası (id_{i}): Geçerli embedding alınamadı.")
+                continue
+
+            emb_values = list(result.embeddings[0].values)
+            
             collection.add(
                 ids=[f"id_{i}"],
-                embeddings=[result.embeddings[0].values],
+                embeddings=[emb_values],
                 documents=[entry['text']],
                 metadatas=[{"source": entry['url'], "section": entry['section']}]
             )
@@ -40,7 +46,12 @@ def query_db(query_text, n_results=3):
         contents=query_text
     )
     
+    if not result.embeddings or not result.embeddings[0].values:
+        return {"documents": [[]]}
+
+    emb_values = list(result.embeddings[0].values)
+    
     return collection.query(
-        query_embeddings=[result.embeddings[0].values],
+        query_embeddings=[emb_values],
         n_results=n_results
     )
